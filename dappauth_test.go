@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/dapperlabs/dappauth/mocks"
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
@@ -15,7 +16,7 @@ type dappauthTest struct {
 	challengeSign                            string // challengeSign should always equal to challenge unless testing for specific key recovery logic
 	signingKey                               *ecdsa.PrivateKey
 	authAddr                                 common.Address
-	mockContract                             *mockContract
+	mockContract                             *mocks.Contract
 	expectedIsSignerActionableOnAddressError bool
 	expectedIsSignerActionableOnAddress      bool
 }
@@ -36,10 +37,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyA,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 nil,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 nil,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -52,10 +53,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "bar",
 			signingKey:    keyA,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 nil,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 nil,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -68,10 +69,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyA,
 			authAddr:      ethCrypto.PubkeyToAddress(keyB.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 nil,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 nil,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -84,10 +85,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: true,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 &keyB.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: true,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 &keyB.PublicKey,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -100,10 +101,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     true,
-				actionableKey:                 &keyB.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     true,
+				ActionableKey:                 &keyB.PublicKey,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -116,10 +117,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 &keyB.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 &keyB.PublicKey,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -132,10 +133,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: false,
-				isSupportsERC725Interface:     true,
-				actionableKey:                 &keyC.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: false,
+				IsSupportsERC725Interface:     true,
+				ActionableKey:                 &keyC.PublicKey,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -148,10 +149,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: true,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 &keyB.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: true,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 &keyB.PublicKey,
 				ErrorOnIsSupportedContract:    true,
 				ErrorOnKeyHasPurpose:          false,
 			},
@@ -164,10 +165,10 @@ func TestDappAuth(t *testing.T) {
 			challengeSign: "foo",
 			signingKey:    keyB,
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
-			mockContract: &mockContract{
-				isSupportsERC725CoreInterface: true,
-				isSupportsERC725Interface:     false,
-				actionableKey:                 &keyB.PublicKey,
+			mockContract: &mocks.Contract{
+				IsSupportsERC725CoreInterface: true,
+				IsSupportsERC725Interface:     false,
+				ActionableKey:                 &keyB.PublicKey,
 				ErrorOnIsSupportedContract:    false,
 				ErrorOnKeyHasPurpose:          true,
 			},

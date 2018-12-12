@@ -1,4 +1,5 @@
-package dappauth
+// Package mocks holds mocks used for testing
+package mocks
 
 import (
 	"bytes"
@@ -10,21 +11,27 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
-type mockContract struct {
-	isSupportsERC725CoreInterface bool
-	isSupportsERC725Interface     bool
-	actionableKey                 *ecdsa.PublicKey
+var (
+	_ERC725CoreInterfaceID = [4]byte{210, 2, 21, 141}  // 0xd202158d
+	_ERC725InterfaceID     = [4]byte{220, 61, 42, 123} // 0xdc3d2a7b
+)
+
+type Contract struct {
+	IsSupportsERC725CoreInterface bool
+	IsSupportsERC725Interface     bool
+	ActionableKey                 *ecdsa.PublicKey
 	ErrorOnIsSupportedContract    bool
 	ErrorOnKeyHasPurpose          bool
 }
 
-func (m *mockContract) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
+func (m *Contract) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
 	return nil, fmt.Errorf("CodeAt not supported")
 }
 
-func (m *mockContract) CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
+func (m *Contract) CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	methodCall := hex.EncodeToString(call.Data[:4])
 	methodParams := call.Data[4:]
 	switch methodCall {
@@ -38,7 +45,7 @@ func (m *mockContract) CallContract(ctx context.Context, call ethereum.CallMsg, 
 }
 
 // "isSupportedContract" method call
-func (m *mockContract) _01ffc9a7(methodParams []byte) ([]byte, error) {
+func (m *Contract) _01ffc9a7(methodParams []byte) ([]byte, error) {
 
 	if m.ErrorOnIsSupportedContract {
 		return nil, fmt.Errorf("isSupportedContract call returned an error")
@@ -47,11 +54,11 @@ func (m *mockContract) _01ffc9a7(methodParams []byte) ([]byte, error) {
 	var interfaceID [4]byte
 	copy(interfaceID[:], methodParams[:4])
 
-	if m.isSupportsERC725CoreInterface && interfaceID == _ERC725CoreInterfaceID {
+	if m.IsSupportsERC725CoreInterface && interfaceID == _ERC725CoreInterfaceID {
 		return _true()
 	}
 
-	if m.isSupportsERC725Interface && interfaceID == _ERC725InterfaceID {
+	if m.IsSupportsERC725Interface && interfaceID == _ERC725InterfaceID {
 		return _true()
 	}
 
@@ -59,13 +66,13 @@ func (m *mockContract) _01ffc9a7(methodParams []byte) ([]byte, error) {
 }
 
 // "KeyHasPurpose" method call
-func (m *mockContract) _d202158d(methodParams []byte) ([]byte, error) {
+func (m *Contract) _d202158d(methodParams []byte) ([]byte, error) {
 
 	if m.ErrorOnKeyHasPurpose {
 		return nil, fmt.Errorf("ErrorOnKeyHasPurpose call returned an error")
 	}
 
-	keyBytes := publicKeyToHash(m.actionableKey)
+	keyBytes := publicKeyToHash(m.ActionableKey)
 	if bytes.Compare(keyBytes, methodParams[:32]) == 0 {
 		return _true()
 	}
@@ -79,4 +86,8 @@ func _true() ([]byte, error) {
 
 func _false() ([]byte, error) {
 	return hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000")
+}
+
+func publicKeyToHash(key *ecdsa.PublicKey) []byte {
+	return ethCrypto.Keccak256(ethCrypto.FromECDSAPub(key)[1:])
 }
