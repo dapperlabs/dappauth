@@ -1,3 +1,5 @@
+// Package dappauth provides the ability to check if an Ethereume signature generated via eth_sign rpc method, has actionable control over a requested address.
+// Supports both external wallets and contract wallets.
 package dappauth
 
 import (
@@ -7,10 +9,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/dapperlabs/dappauth/ERCs"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/pazams/dappauth/ERCs"
 )
 
 var (
@@ -19,13 +21,13 @@ var (
 	_ERC725ActionPurpose   = big.NewInt(2)
 )
 
-// Authenticator ..
+// Authenticator is the instance that holds the ethclient.Client .
 type Authenticator struct {
 	cc  bind.ContractCaller
 	ctx context.Context // Network context to support cancellation and timeouts (nil = no timeout)
 }
 
-// NewAuthenticator ..
+// NewAuthenticator creates a new Authenticator .
 func NewAuthenticator(ctx context.Context, cc bind.ContractCaller) *Authenticator {
 	return &Authenticator{
 		ctx: ctx,
@@ -33,7 +35,9 @@ func NewAuthenticator(ctx context.Context, cc bind.ContractCaller) *Authenticato
 	}
 }
 
-// IsSignerActionableOnAddress ..
+// IsSignerActionableOnAddress implements the logic to check if the address extracted from 'challenge' and 'signautre',
+// has actionable control over 'addrHex'.
+// 'addrHex' may be an address of either a contract wallet, or an external wallet.
 func (a *Authenticator) IsSignerActionableOnAddress(challenge, signature, addrHex string) (bool, error) {
 	addr := common.HexToAddress(addrHex)
 	sigBytes := common.FromHex(signature)
