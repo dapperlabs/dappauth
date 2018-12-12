@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pazams/dappauth"
+	"github.com/dapperlabs/dappauth"
 )
 
 // AuthenticationHandler ..
