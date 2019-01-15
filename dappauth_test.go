@@ -83,7 +83,7 @@ func TestDappAuth(t *testing.T) {
 			expectedAuthorizedSigner:      true,
 		},
 		{
-			title:         "Smart-contract wallets with a 1-of-1 incorrect internal key should be authorized signers over their address",
+			title:         "Smart-contract wallets with a 1-of-1 incorrect internal key should NOT be authorized signers over their address",
 			challenge:     "foo",
 			challengeSign: "foo",
 			signingKey:    keyB,
