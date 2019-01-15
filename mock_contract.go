@@ -10,14 +10,12 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 type mockContract struct {
-	isSupportsERC725CoreInterface bool
-	isSupportsERC725Interface     bool
-	actionableKey                 *ecdsa.PublicKey
-	ErrorOnIsSupportedContract    bool
-	ErrorOnKeyHasPurpose          bool
+	authorizedKey         *ecdsa.PublicKey
+	ErrorIsValidSignature bool
 }
 
 func (m *mockContract) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
@@ -28,45 +26,38 @@ func (m *mockContract) CallContract(ctx context.Context, call ethereum.CallMsg, 
 	methodCall := hex.EncodeToString(call.Data[:4])
 	methodParams := call.Data[4:]
 	switch methodCall {
-	case "01ffc9a7":
-		return m._01ffc9a7(methodParams)
-	case "d202158d":
-		return m._d202158d(methodParams)
+	case "20c13b0b":
+		return m._20c13b0b(methodParams)
 	default:
 		return nil, fmt.Errorf("Unexpected method %v", methodCall)
 	}
 }
 
-// "isSupportedContract" method call
-func (m *mockContract) _01ffc9a7(methodParams []byte) ([]byte, error) {
+// "IsValidSignature" method call
+func (m *mockContract) _20c13b0b(methodParams []byte) ([]byte, error) {
 
-	if m.ErrorOnIsSupportedContract {
-		return nil, fmt.Errorf("isSupportedContract call returned an error")
+	data := methodParams[96:128]
+	sig := methodParams[160:225]
+
+	sig[64] -= 27
+
+	if m.ErrorIsValidSignature {
+		return nil, fmt.Errorf("IsValidSignature call returned an error")
 	}
 
-	var interfaceID [4]byte
-	copy(interfaceID[:], methodParams[:4])
-
-	if m.isSupportsERC725CoreInterface && interfaceID == _ERC725CoreInterfaceID {
-		return _true()
+	if m.authorizedKey == nil {
+		return _false()
 	}
 
-	if m.isSupportsERC725Interface && interfaceID == _ERC725InterfaceID {
-		return _true()
+	recoveredKey, err := ethCrypto.SigToPub(data, sig)
+	if err != nil {
+		return nil, err
 	}
 
-	return _false()
-}
+	recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
+	authorizedKeyAddr := ethCrypto.PubkeyToAddress(*m.authorizedKey)
 
-// "KeyHasPurpose" method call
-func (m *mockContract) _d202158d(methodParams []byte) ([]byte, error) {
-
-	if m.ErrorOnKeyHasPurpose {
-		return nil, fmt.Errorf("ErrorOnKeyHasPurpose call returned an error")
-	}
-
-	keyBytes := publicKeyToHash(m.actionableKey)
-	if bytes.Compare(keyBytes, methodParams[:32]) == 0 {
+	if bytes.Compare(authorizedKeyAddr.Bytes(), recoveredAddress.Bytes()) == 0 {
 		return _true()
 	}
 
@@ -74,7 +65,8 @@ func (m *mockContract) _d202158d(methodParams []byte) ([]byte, error) {
 }
 
 func _true() ([]byte, error) {
-	return hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
+	// magic value is 0x20c13b0b
+	return hex.DecodeString("20c13b0b00000000000000000000000000000000000000000000000000000000")
 }
 
 func _false() ([]byte, error) {
