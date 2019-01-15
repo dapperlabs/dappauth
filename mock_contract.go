@@ -39,19 +39,19 @@ func (m *mockContract) _20c13b0b(methodParams []byte) ([]byte, error) {
 	data := methodParams[96:128]
 	sig := methodParams[160:225]
 
-	sig[64] -= 27
+	sig[64] -= 27 // Transform V from 27/28 to 0/1 according to the yellow paper
 
 	if m.ErrorIsValidSignature {
-		return nil, fmt.Errorf("IsValidSignature call returned an error")
+		// Purposely make ethCrypto.SigToPub throw an error by suppling a slice larger then 32
+		data = make([]byte, 33)
+	}
+	recoveredKey, err := ethCrypto.SigToPub(data, sig)
+	if err != nil {
+		return nil, err
 	}
 
 	if m.authorizedKey == nil {
 		return _false()
-	}
-
-	recoveredKey, err := ethCrypto.SigToPub(data, sig)
-	if err != nil {
-		return nil, err
 	}
 
 	recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
