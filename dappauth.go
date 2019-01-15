@@ -5,7 +5,6 @@ package dappauth
 import (
 	"bytes"
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 
 	"github.com/dapperlabs/dappauth/ERCs"
@@ -77,10 +76,6 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	}
 
 	return magicValue == _ERC1271MagicValue, nil
-}
-
-func publicKeyToHash(key *ecdsa.PublicKey) []byte {
-	return ethCrypto.Keccak256(ethCrypto.FromECDSAPub(key)[1:])
 }
 
 func personalMessageHash(message string) []byte {
