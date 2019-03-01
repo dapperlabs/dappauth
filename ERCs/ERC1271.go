@@ -28,7 +28,7 @@ var (
 )
 
 // ERC1271ABI is the input ABI used to generate the binding from.
-const ERC1271ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_data\",\"type\":\"bytes\"},{\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"name\":\"magicValue\",\"type\":\"bytes4\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const ERC1271ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"hash\",\"type\":\"bytes32\"},{\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"name\":\"magicValue\",\"type\":\"bytes4\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // ERC1271 is an auto generated Go binding around an Ethereum contract.
 type ERC1271 struct {
@@ -172,28 +172,28 @@ func (_ERC1271 *ERC1271TransactorRaw) Transact(opts *bind.TransactOpts, method s
 	return _ERC1271.Contract.contract.Transact(opts, method, params...)
 }
 
-// IsValidSignature is a free data retrieval call binding the contract method 0x20c13b0b.
+// IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(_data bytes, _signature bytes) constant returns(magicValue bytes4)
-func (_ERC1271 *ERC1271Caller) IsValidSignature(opts *bind.CallOpts, _data []byte, _signature []byte) ([4]byte, error) {
+// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+func (_ERC1271 *ERC1271Caller) IsValidSignature(opts *bind.CallOpts, hash [32]byte, _signature []byte) ([4]byte, error) {
 	var (
 		ret0 = new([4]byte)
 	)
 	out := ret0
-	err := _ERC1271.contract.Call(opts, out, "isValidSignature", _data, _signature)
+	err := _ERC1271.contract.Call(opts, out, "isValidSignature", hash, _signature)
 	return *ret0, err
 }
 
-// IsValidSignature is a free data retrieval call binding the contract method 0x20c13b0b.
+// IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(_data bytes, _signature bytes) constant returns(magicValue bytes4)
-func (_ERC1271 *ERC1271Session) IsValidSignature(_data []byte, _signature []byte) ([4]byte, error) {
-	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, _data, _signature)
+// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+func (_ERC1271 *ERC1271Session) IsValidSignature(hash [32]byte, _signature []byte) ([4]byte, error) {
+	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, hash, _signature)
 }
 
-// IsValidSignature is a free data retrieval call binding the contract method 0x20c13b0b.
+// IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(_data bytes, _signature bytes) constant returns(magicValue bytes4)
-func (_ERC1271 *ERC1271CallerSession) IsValidSignature(_data []byte, _signature []byte) ([4]byte, error) {
-	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, _data, _signature)
+// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+func (_ERC1271 *ERC1271CallerSession) IsValidSignature(hash [32]byte, _signature []byte) ([4]byte, error) {
+	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, hash, _signature)
 }
