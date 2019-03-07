@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	_ERC1271MagicValue = [4]byte{32, 193, 59, 11} // 0x20c13b0b
+	_ERC1271MagicValue = [4]byte{22, 38, 186, 126} // 0x1626ba7e
 )
 
 // Authenticator is the instance that holds the ethclient.Client .
@@ -42,9 +42,9 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	adjSigBytes[64] -= 27 // Transform V from 27/28 to 0/1 according to the yellow paper
 
 	// retrieve public key from signature
-	var challengeHash []byte
-	challengeHash = personalMessageHash(challenge)
-	recoveredKey, err := ethCrypto.SigToPub(challengeHash, adjSigBytes)
+	var personalChallengeHash []byte
+	personalChallengeHash = personalMessageHash(challenge)
+	recoveredKey, err := ethCrypto.SigToPub(personalChallengeHash, adjSigBytes)
 	if err != nil {
 		return false, err
 	}
@@ -70,6 +70,9 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 		},
 	}
 
+	// we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
+	var challengeHash [32]byte
+	copy(challengeHash[:], ethCrypto.Keccak256([]byte(challenge)))
 	magicValue, err := _ERC1271CallerSession.IsValidSignature(challengeHash, origSigBytes)
 	if err != nil {
 		return false, err
