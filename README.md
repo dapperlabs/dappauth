@@ -37,11 +37,11 @@ func (a *AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	addrHex := r.PostFormValue("addrHex")
 
 	authenticator := dappauth.NewAuthenticator(r.Context(), a.client)
-	isSignerActionableOnAddress, err := authenticator.IsSignerActionableOnAddress(challenge, signature, addrHex)
+	isAuthorizedSigner, err := authenticator.IsAuthorizedSigner(challenge, signature, addrHex)
 	if err != nil {
 		// return a 5XX status code
 	}
-	if !isSignerActionableOnAddress {
+	if !isAuthorizedSigner{
 		// return a 4XX status code
 	}
 
