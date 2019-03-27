@@ -5,19 +5,21 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum"
+	ethAbi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 type mockContract struct {
-	isSupportsERC725CoreInterface bool
-	isSupportsERC725Interface     bool
-	actionableKey                 *ecdsa.PublicKey
-	ErrorOnIsSupportedContract    bool
-	ErrorOnKeyHasPurpose          bool
+	address               common.Address
+	authorizedKey         *ecdsa.PublicKey
+	errorIsValidSignature bool
 }
 
 func (m *mockContract) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
@@ -28,45 +30,56 @@ func (m *mockContract) CallContract(ctx context.Context, call ethereum.CallMsg, 
 	methodCall := hex.EncodeToString(call.Data[:4])
 	methodParams := call.Data[4:]
 	switch methodCall {
-	case "01ffc9a7":
-		return m._01ffc9a7(methodParams)
-	case "d202158d":
-		return m._d202158d(methodParams)
+	case "1626ba7e":
+		return m._1626ba7e(methodParams)
 	default:
 		return nil, fmt.Errorf("Unexpected method %v", methodCall)
 	}
 }
 
-// "isSupportedContract" method call
-func (m *mockContract) _01ffc9a7(methodParams []byte) ([]byte, error) {
+// "IsValidSignature" method call
+func (m *mockContract) _1626ba7e(methodParams []byte) ([]byte, error) {
+	// TODO: refactor out of method
+	const definition = `[
+	{ "name" : "mixedBytes", "constant" : true, "outputs": [{ "name": "a", "type": "bytes32" }, { "name": "b", "type": "bytes" } ] }]`
 
-	if m.ErrorOnIsSupportedContract {
-		return nil, fmt.Errorf("isSupportedContract call returned an error")
+	abi, err := ethAbi.JSON(strings.NewReader(definition))
+	if err != nil {
+		return nil, err
 	}
 
-	var interfaceID [4]byte
-	copy(interfaceID[:], methodParams[:4])
+	data := [32]byte{}
+	sig := []byte{}
 
-	if m.isSupportsERC725CoreInterface && interfaceID == _ERC725CoreInterfaceID {
-		return _true()
+	mixedBytes := []interface{}{&data, &sig}
+	err = abi.Unpack(&mixedBytes, "mixedBytes", methodParams)
+	if err != nil {
+		return nil, err
 	}
 
-	if m.isSupportsERC725Interface && interfaceID == _ERC725InterfaceID {
-		return _true()
+	if m.errorIsValidSignature {
+		return nil, errors.New("Dummy error")
 	}
 
-	return _false()
-}
+	// split to 65 bytes (130 hex) chunks
+	multiSigs := chunk65Bytes(sig)
+	expectedAuthrorisedSig := multiSigs[0][:]
+	expectedAuthrorisedSig[64] -= 27 // Transform V from 27/28 to 0/1 according to the yellow paper
 
-// "KeyHasPurpose" method call
-func (m *mockContract) _d202158d(methodParams []byte) ([]byte, error) {
-
-	if m.ErrorOnKeyHasPurpose {
-		return nil, fmt.Errorf("ErrorOnKeyHasPurpose call returned an error")
+	dataErc191Hash := erc191MessageHash(data[:], m.address)
+	recoveredKey, err := ethCrypto.SigToPub(dataErc191Hash, expectedAuthrorisedSig)
+	if err != nil {
+		return nil, err
 	}
 
-	keyBytes := publicKeyToHash(m.actionableKey)
-	if bytes.Compare(keyBytes, methodParams[:32]) == 0 {
+	if m.authorizedKey == nil {
+		return _false()
+	}
+
+	recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
+	authorizedKeyAddr := ethCrypto.PubkeyToAddress(*m.authorizedKey)
+
+	if bytes.Compare(authorizedKeyAddr.Bytes(), recoveredAddress.Bytes()) == 0 {
 		return _true()
 	}
 
@@ -74,9 +87,39 @@ func (m *mockContract) _d202158d(methodParams []byte) ([]byte, error) {
 }
 
 func _true() ([]byte, error) {
-	return hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
+	// magic value is 0x1626ba7e
+	return hex.DecodeString("1626ba7e00000000000000000000000000000000000000000000000000000000")
 }
 
 func _false() ([]byte, error) {
 	return hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000000")
+}
+
+func erc191MessageHash(msg []byte, address common.Address) []byte {
+
+	b := append([]byte{}, 25, 0)
+	b = append(b, address.Bytes()...)
+	b = append(b, msg...)
+
+	return ethCrypto.Keccak256(b)
+}
+
+func chunk65Bytes(b []byte) [][65]byte {
+	chunkSize := 65
+	var chunks [][65]byte
+
+	for i := 0; i < len(b); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(b) {
+			end = len(b)
+		}
+
+		var chunk [65]byte
+		copy(chunk[:], b[i:end])
+
+		chunks = append(chunks, chunk)
+	}
+
+	return chunks
 }
