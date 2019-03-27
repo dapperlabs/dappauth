@@ -44,16 +44,18 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	// retrieve public key from signature
 	var personalChallengeHash []byte
 	personalChallengeHash = personalMessageHash(challenge)
+
+	// error is expected when multi sig ("invalid signature length")
 	recoveredKey, err := ethCrypto.SigToPub(personalChallengeHash, adjSigBytes)
-	if err != nil {
-		return false, err
-	}
 
-	recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
+	// procced with EOA check if no error
+	if err == nil {
+		recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
 
-	// try direct-keyed wallet
-	if bytes.Compare(addr.Bytes(), recoveredAddress.Bytes()) == 0 {
-		return true, nil
+		// try direct-keyed wallet
+		if bytes.Compare(addr.Bytes(), recoveredAddress.Bytes()) == 0 {
+			return true, nil
+		}
 	}
 
 	// try smart-contract wallet

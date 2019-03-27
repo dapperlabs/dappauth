@@ -57,14 +57,17 @@ func (m *mockContract) _1626ba7e(methodParams []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	sig[64] -= 27 // Transform V from 27/28 to 0/1 according to the yellow paper
-
 	if m.errorIsValidSignature {
 		return nil, errors.New("Dummy error")
 	}
 
+	// split to 65 bytes (130 hex) chunks
+	multiSigs := chunk65Bytes(sig)
+	expectedAuthrorisedSig := multiSigs[0][:]
+	expectedAuthrorisedSig[64] -= 27 // Transform V from 27/28 to 0/1 according to the yellow paper
+
 	dataErc191Hash := erc191MessageHash(data[:], m.address)
-	recoveredKey, err := ethCrypto.SigToPub(dataErc191Hash, sig)
+	recoveredKey, err := ethCrypto.SigToPub(dataErc191Hash, expectedAuthrorisedSig)
 	if err != nil {
 		return nil, err
 	}
@@ -99,4 +102,24 @@ func erc191MessageHash(msg []byte, address common.Address) []byte {
 	b = append(b, msg...)
 
 	return ethCrypto.Keccak256(b)
+}
+
+func chunk65Bytes(b []byte) [][65]byte {
+	chunkSize := 65
+	var chunks [][65]byte
+
+	for i := 0; i < len(b); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(b) {
+			end = len(b)
+		}
+
+		var chunk [65]byte
+		copy(chunk[:], b[i:end])
+
+		chunks = append(chunks, chunk)
+	}
+
+	return chunks
 }

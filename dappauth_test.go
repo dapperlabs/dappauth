@@ -154,18 +154,6 @@ func TestDappAuth(t *testing.T) {
 		})
 	}
 
-	// extra test for extra code-coverage
-	t.Run("Expect messy signature to cause an error", func(t *testing.T) {
-		test := dappauthTests[0]
-
-		authenticator := NewAuthenticator(nil, test.mockContract)
-
-		sig := generateSignature(test.isEOA, test.challengeSign, test.signingKeys[0], test.authAddr, t)
-		sig = sig + "ffff" // messup the signature
-		_, err := authenticator.IsAuthorizedSigner(test.challenge, sig, test.authAddr.Hex())
-		expectBool(err != nil, true, t)
-	})
-
 }
 
 func generateSignature(isEOA bool, msg string, key *ecdsa.PrivateKey, address common.Address, t *testing.T) string {
