@@ -14,7 +14,7 @@ type dappauthTest struct {
 	isEOA                         bool
 	challenge                     string
 	challengeSign                 string // challengeSign should always equal to challenge unless testing for specific key recovery logic
-	signingKey                    *ecdsa.PrivateKey
+	signingKeys                   []*ecdsa.PrivateKey
 	authAddr                      common.Address
 	mockContract                  *mockContract
 	expectedAuthorizedSignerError bool
@@ -36,7 +36,7 @@ func TestDappAuth(t *testing.T) {
 			isEOA:         true,
 			challenge:     "foo",
 			challengeSign: "foo",
-			signingKey:    keyA,
+			signingKeys:   []*ecdsa.PrivateKey{keyA},
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
 			mockContract: &mockContract{
 				address:               [20]byte{},
@@ -51,7 +51,7 @@ func TestDappAuth(t *testing.T) {
 			isEOA:         true,
 			challenge:     "foo",
 			challengeSign: "bar",
-			signingKey:    keyA,
+			signingKeys:   []*ecdsa.PrivateKey{keyA},
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
 			mockContract: &mockContract{
 				address:               [20]byte{},
@@ -66,7 +66,7 @@ func TestDappAuth(t *testing.T) {
 			isEOA:         true,
 			challenge:     "foo",
 			challengeSign: "foo",
-			signingKey:    keyA,
+			signingKeys:   []*ecdsa.PrivateKey{keyA},
 			authAddr:      ethCrypto.PubkeyToAddress(keyB.PublicKey),
 			mockContract: &mockContract{
 				address:               [20]byte{},
@@ -79,9 +79,24 @@ func TestDappAuth(t *testing.T) {
 		{
 			title:         "Smart-contract wallets with a 1-of-1 correct internal key should be authorized signers over their address",
 			isEOA:         false,
-			challenge:     "foooo",
-			challengeSign: "foooo",
-			signingKey:    keyB,
+			challenge:     "foo",
+			challengeSign: "foo",
+			signingKeys:   []*ecdsa.PrivateKey{keyB},
+			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
+			mockContract: &mockContract{
+				address:               ethCrypto.PubkeyToAddress(keyA.PublicKey),
+				authorizedKey:         &keyB.PublicKey,
+				errorIsValidSignature: false,
+			},
+			expectedAuthorizedSignerError: false,
+			expectedAuthorizedSigner:      true,
+		},
+		{
+			title:         "Smart-contract wallets with a 1-of-2 correct internal key should be authorized signers over their address",
+			isEOA:         false,
+			challenge:     "foo",
+			challengeSign: "foo",
+			signingKeys:   []*ecdsa.PrivateKey{keyB, keyC},
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
 			mockContract: &mockContract{
 				address:               ethCrypto.PubkeyToAddress(keyA.PublicKey),
@@ -96,7 +111,7 @@ func TestDappAuth(t *testing.T) {
 			isEOA:         false,
 			challenge:     "foo",
 			challengeSign: "foo",
-			signingKey:    keyB,
+			signingKeys:   []*ecdsa.PrivateKey{keyB},
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
 			mockContract: &mockContract{
 				address:               ethCrypto.PubkeyToAddress(keyA.PublicKey),
@@ -111,7 +126,7 @@ func TestDappAuth(t *testing.T) {
 			isEOA:         false,
 			challenge:     "foo",
 			challengeSign: "foo",
-			signingKey:    keyB,
+			signingKeys:   []*ecdsa.PrivateKey{keyB},
 			authAddr:      ethCrypto.PubkeyToAddress(keyA.PublicKey),
 			mockContract: &mockContract{
 				address:               ethCrypto.PubkeyToAddress(keyA.PublicKey),
@@ -129,10 +144,8 @@ func TestDappAuth(t *testing.T) {
 			authenticator := NewAuthenticator(nil, test.mockContract)
 
 			var sig string
-			if test.isEOA {
-				sig = signEOAPersonalMessage(test.challengeSign, test.signingKey, t)
-			} else {
-				sig = signERC1654PersonalMessage(test.challengeSign, test.signingKey, test.authAddr, t)
+			for _, signingKey := range test.signingKeys {
+				sig += generateSignature(test.isEOA, test.challengeSign, signingKey, test.authAddr, t)
 			}
 			isAuthorizedSigner, err := authenticator.IsAuthorizedSigner(test.challenge, sig, test.authAddr.Hex())
 
@@ -147,12 +160,19 @@ func TestDappAuth(t *testing.T) {
 
 		authenticator := NewAuthenticator(nil, test.mockContract)
 
-		sig := signEOAPersonalMessage(test.challengeSign, test.signingKey, t)
-		sig = sig + "ffff" // mess the signature
+		sig := generateSignature(test.isEOA, test.challengeSign, test.signingKeys[0], test.authAddr, t)
+		sig = sig + "ffff" // messup the signature
 		_, err := authenticator.IsAuthorizedSigner(test.challenge, sig, test.authAddr.Hex())
 		expectBool(err != nil, true, t)
 	})
 
+}
+
+func generateSignature(isEOA bool, msg string, key *ecdsa.PrivateKey, address common.Address, t *testing.T) string {
+	if isEOA {
+		return signEOAPersonalMessage(msg, key, t)
+	}
+	return signERC1654PersonalMessage(msg, key, address, t)
 }
 
 // emulates what EOA wallets like MetaMask perform
