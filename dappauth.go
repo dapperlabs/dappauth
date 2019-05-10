@@ -56,6 +56,7 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 		if bytes.Compare(addr.Bytes(), recoveredAddress.Bytes()) == 0 {
 			return true, nil
 		}
+		return false, nil
 	}
 
 	// try smart-contract wallet
