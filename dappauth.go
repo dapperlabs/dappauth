@@ -46,10 +46,10 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	personalChallengeHash = personalMessageHash(challenge)
 
 	// error is expected when multi sig ("invalid signature length")
-	recoveredKey, err := ethCrypto.SigToPub(personalChallengeHash, adjSigBytes)
+	recoveredKey, errEOA := ethCrypto.SigToPub(personalChallengeHash, adjSigBytes)
 
 	// procced with EOA check if no error
-	if err == nil {
+	if errEOA == nil {
 		recoveredAddress := ethCrypto.PubkeyToAddress(*recoveredKey)
 
 		// try direct-keyed wallet
@@ -59,9 +59,9 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	}
 
 	// try smart-contract wallet
-	_ERC1271Caller, err := ERCs.NewERC1271Caller(addr, a.cc)
-	if err != nil {
-		return false, err
+	_ERC1271Caller, errCA := ERCs.NewERC1271Caller(addr, a.cc)
+	if errCA != nil {
+		return false, mergeErrors(errEOA, errCA)
 	}
 
 	_ERC1271CallerSession := ERCs.ERC1271CallerSession{
@@ -75,9 +75,9 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	// we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
 	var challengeHash [32]byte
 	copy(challengeHash[:], ethCrypto.Keccak256([]byte(challenge)))
-	magicValue, err := _ERC1271CallerSession.IsValidSignature(challengeHash, origSigBytes)
-	if err != nil {
-		return false, err
+	magicValue, errCA := _ERC1271CallerSession.IsValidSignature(challengeHash, origSigBytes)
+	if errCA != nil {
+		return false, mergeErrors(errEOA, errCA)
 	}
 
 	return magicValue == _ERC1271MagicValue, nil
@@ -86,4 +86,8 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 func personalMessageHash(message string) []byte {
 	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
 	return ethCrypto.Keccak256([]byte(msg))
+}
+
+func mergeErrors(errEOA error, errCA error) error {
+	return fmt.Errorf("Authorisation check failed and errored in 2 alternative flows. 'External Owned Account' check errored with: '%v'. 'Contract Account' check errored with: '%v'", errEOA, errCA)
 }
