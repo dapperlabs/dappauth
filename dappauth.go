@@ -89,5 +89,12 @@ func personalMessageHash(message string) []byte {
 }
 
 func mergeErrors(errEOA error, errCA error) error {
-	return fmt.Errorf("Authorisation check failed and errored in 2 alternative flows. 'External Owned Account' check errored with: '%v'. 'Contract Account' check errored with: '%v'", errEOA, errCA)
+	var msgEOA string
+	if errEOA == nil {
+		msgEOA = "returned false"
+	} else {
+		msgEOA = fmt.Sprintf("errored with: '%v'", errEOA)
+	}
+
+	return fmt.Errorf("Authorisation check failed and errored in 2 alternative flows. 'External Owned Account' check %s. 'Contract Account' check errored with: '%v'", msgEOA, errCA)
 }
