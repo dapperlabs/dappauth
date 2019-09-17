@@ -5,7 +5,9 @@ package dappauth
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/dapperlabs/dappauth/ERCs"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -83,9 +85,16 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	return magicValue == _ERC1271MagicValue, nil
 }
 
+// See https://github.com/MetaMask/eth-sig-util/issues/60
 func personalMessageHash(message string) []byte {
-	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
-	return ethCrypto.Keccak256([]byte(msg))
+	b, err := hex.DecodeString(strings.TrimPrefix(message, "0x"))
+	// if hex decode was successful, then treat is as a hex string
+	if err == nil {
+		msgToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d", len(b))
+		return ethCrypto.Keccak256(append([]byte(msgToHash), b...))
+	}
+	msgToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
+	return ethCrypto.Keccak256([]byte(msgToHash))
 }
 
 func mergeErrors(errEOA error, errCA error) error {
