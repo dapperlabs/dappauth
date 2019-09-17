@@ -154,6 +154,22 @@ func TestDappAuth(t *testing.T) {
 		})
 	}
 
+	// this test adds to test coverage
+	t.Run("Invalid signature should fail", func(t *testing.T) {
+		authenticator := NewAuthenticator(nil, &mockContract{
+			address:               [20]byte{},
+			authorizedKey:         nil,
+			errorIsValidSignature: false,
+		})
+
+		invalidSigBytes := [65]byte{}
+		invalidSig := hex.EncodeToString(invalidSigBytes[:])
+		isAuthorizedSigner, err := authenticator.IsAuthorizedSigner("foo", invalidSig, ethCrypto.PubkeyToAddress(keyA.PublicKey).Hex())
+
+		expectBool(err != nil, true, t)
+		expectBool(isAuthorizedSigner, false, t)
+	})
+
 }
 
 func generateSignature(isEOA bool, msg string, key *ecdsa.PrivateKey, address common.Address, t *testing.T) string {
