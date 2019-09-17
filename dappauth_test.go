@@ -3,6 +3,7 @@ package dappauth
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -172,6 +173,25 @@ func TestDappAuth(t *testing.T) {
 
 }
 
+// It should decode challenge as utf8 by default when computing EOA personal messages hash
+func TestPersonalMessageDecodeUTF8(t *testing.T) {
+	ethMsgHash := personalMessageHash("foo")
+	eoaHash := hex.EncodeToString(ethMsgHash)
+
+	expectString(fmt.Sprintf("0x%s", eoaHash), "0x76b2e96714d3b5e6eb1d1c509265430b907b44f72b2a22b06fcd4d96372b8565", t)
+}
+
+// It should decode challenge as hex if hex is detected when computing EOA personal messages hash
+// See https://github.com/MetaMask/eth-sig-util/issues/60
+func TestPersonalMessageDecodeHex(t *testing.T) {
+	ethMsgHash := personalMessageHash("0xffff")
+	eoaHash := hex.EncodeToString(ethMsgHash)
+
+	// result if 0xffff is decoded as hex:  13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47
+	// result if 0xffff is decoded as utf8: 247aefb5d2e5b17fca61f786c779f7388485460c13e51308f88b2ff84ffa6851
+	expectString(fmt.Sprintf("0x%s", eoaHash), "0x13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47", t)
+}
+
 func generateSignature(isEOA bool, msg string, key *ecdsa.PrivateKey, address common.Address, t *testing.T) string {
 	if isEOA {
 		return signEOAPersonalMessage(msg, key, t)
@@ -210,5 +230,11 @@ func checkError(err error, t *testing.T) {
 func expectBool(actual, expected bool, t *testing.T) {
 	if actual != expected {
 		t.Errorf("expected %v to be %v", actual, expected)
+	}
+}
+
+func expectString(actual, expected string, t *testing.T) {
+	if actual != expected {
+		t.Errorf("expected %s to be %s", actual, expected)
 	}
 }
