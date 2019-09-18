@@ -175,10 +175,12 @@ func TestDappAuth(t *testing.T) {
 
 // It should decode challenge as utf8 by default when computing EOA personal messages hash
 func TestPersonalMessageDecodeUTF8(t *testing.T) {
-	ethMsgHash := personalMessageHash("foo")
-	eoaHash := hex.EncodeToString(ethMsgHash)
-
+	eoaHash := hex.EncodeToString(personalMessageHash("foo"))
 	expectString(fmt.Sprintf("0x%s", eoaHash), "0x76b2e96714d3b5e6eb1d1c509265430b907b44f72b2a22b06fcd4d96372b8565", t)
+
+	scHashBytes := scMessageHash("foo")
+	scHash := hex.EncodeToString(scHashBytes[:])
+	expectString(fmt.Sprintf("0x%s", scHash), "0x41b1a0649752af1b28b3dc29a1556eee781e4a4c3a1f7f53f90fa834de098c4d", t)
 }
 
 // It should decode challenge as hex if hex is detected when computing EOA personal messages hash
