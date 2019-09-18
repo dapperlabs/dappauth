@@ -92,8 +92,9 @@ func personalMessageHash(challenge string) []byte {
 
 // This is a hash just over the challenge. The smart contract takes this result and hashes on top to an erc191 hash.
 func scMessageHash(challenge string) [32]byte {
+	decodedChallenge := decodeChallenge(challenge)
 	var challengeHash [32]byte
-	copy(challengeHash[:], ethCrypto.Keccak256([]byte(challenge)))
+	copy(challengeHash[:], ethCrypto.Keccak256(decodedChallenge))
 	return challengeHash
 }
 
