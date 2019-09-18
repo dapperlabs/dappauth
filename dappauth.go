@@ -83,7 +83,6 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	return magicValue == _ERC1271MagicValue, nil
 }
 
-// See https://github.com/MetaMask/eth-sig-util/issues/60
 func personalMessageHash(challenge string) []byte {
 	b := decodeChallenge(challenge)
 	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(b), b)
