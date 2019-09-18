@@ -75,9 +75,7 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	}
 
 	// we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
-	var challengeHash [32]byte
-	copy(challengeHash[:], ethCrypto.Keccak256([]byte(challenge)))
-	magicValue, errCA := _ERC1271CallerSession.IsValidSignature(challengeHash, origSigBytes)
+	magicValue, errCA := _ERC1271CallerSession.IsValidSignature(scMessageHash(challenge), origSigBytes)
 	if errCA != nil {
 		return false, mergeErrors(errEOA, errCA)
 	}
@@ -85,16 +83,28 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	return magicValue == _ERC1271MagicValue, nil
 }
 
+func personalMessageHash(challenge string) []byte {
+	b := decodeChallenge(challenge)
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(b), b)
+	return ethCrypto.Keccak256([]byte(msg))
+}
+
+// This is a hash just over the challenge. The smart contract takes this result and hashes on top to an erc191 hash.
+func scMessageHash(challenge string) [32]byte {
+	decodedChallenge := decodeChallenge(challenge)
+	var challengeHash [32]byte
+	copy(challengeHash[:], ethCrypto.Keccak256(decodedChallenge))
+	return challengeHash
+}
+
 // See https://github.com/MetaMask/eth-sig-util/issues/60
-func personalMessageHash(message string) []byte {
-	b, err := hex.DecodeString(strings.TrimPrefix(message, "0x"))
+func decodeChallenge(challenge string) []byte {
+	b, err := hex.DecodeString(strings.TrimPrefix(challenge, "0x"))
 	// if hex decode was successful, then treat is as a hex string
 	if err == nil {
-		msgToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d", len(b))
-		return ethCrypto.Keccak256(append([]byte(msgToHash), b...))
+		return b
 	}
-	msgToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
-	return ethCrypto.Keccak256([]byte(msgToHash))
+	return []byte(challenge)
 }
 
 func mergeErrors(errEOA error, errCA error) error {

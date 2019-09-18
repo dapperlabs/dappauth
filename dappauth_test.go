@@ -175,21 +175,28 @@ func TestDappAuth(t *testing.T) {
 
 // It should decode challenge as utf8 by default when computing EOA personal messages hash
 func TestPersonalMessageDecodeUTF8(t *testing.T) {
-	ethMsgHash := personalMessageHash("foo")
-	eoaHash := hex.EncodeToString(ethMsgHash)
-
+	eoaHash := hex.EncodeToString(personalMessageHash("foo"))
 	expectString(fmt.Sprintf("0x%s", eoaHash), "0x76b2e96714d3b5e6eb1d1c509265430b907b44f72b2a22b06fcd4d96372b8565", t)
+
+	scHashBytes := scMessageHash("foo")
+	scHash := hex.EncodeToString(scHashBytes[:])
+	expectString(fmt.Sprintf("0x%s", scHash), "0x41b1a0649752af1b28b3dc29a1556eee781e4a4c3a1f7f53f90fa834de098c4d", t)
 }
 
 // It should decode challenge as hex if hex is detected when computing EOA personal messages hash
 // See https://github.com/MetaMask/eth-sig-util/issues/60
 func TestPersonalMessageDecodeHex(t *testing.T) {
-	ethMsgHash := personalMessageHash("0xffff")
-	eoaHash := hex.EncodeToString(ethMsgHash)
 
 	// result if 0xffff is decoded as hex:  13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47
 	// result if 0xffff is decoded as utf8: 247aefb5d2e5b17fca61f786c779f7388485460c13e51308f88b2ff84ffa6851
+	eoaHash := hex.EncodeToString(personalMessageHash("0xffff"))
 	expectString(fmt.Sprintf("0x%s", eoaHash), "0x13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47", t)
+
+	// result if 0xffff is decoded as hex:  06d41322d79dfed27126569cb9a80eb0967335bf2f3316359d2a93c779fcd38a
+	// result if 0xffff is decoded as utf8: f0443ea82539c5136844b0a175f544b7ee7bc0fc5ce940bad19f08eaf618af71
+	scHashBytes := scMessageHash("0xffff")
+	scHash := hex.EncodeToString(scHashBytes[:])
+	expectString(fmt.Sprintf("0x%s", scHash), "0x06d41322d79dfed27126569cb9a80eb0967335bf2f3316359d2a93c779fcd38a", t)
 }
 
 func generateSignature(isEOA bool, msg string, key *ecdsa.PrivateKey, address common.Address, t *testing.T) string {
