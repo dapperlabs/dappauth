@@ -75,9 +75,7 @@ func (a *Authenticator) IsAuthorizedSigner(challenge, signature, addrHex string)
 	}
 
 	// we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
-	var challengeHash [32]byte
-	copy(challengeHash[:], ethCrypto.Keccak256([]byte(challenge)))
-	magicValue, errCA := _ERC1271CallerSession.IsValidSignature(challengeHash, origSigBytes)
+	magicValue, errCA := _ERC1271CallerSession.IsValidSignature(scMessageHash(challenge), origSigBytes)
 	if errCA != nil {
 		return false, mergeErrors(errEOA, errCA)
 	}
@@ -95,6 +93,13 @@ func personalMessageHash(message string) []byte {
 	}
 	msgToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
 	return ethCrypto.Keccak256([]byte(msgToHash))
+}
+
+// This is a hash just over the challenge. The smart contract takes this result and hashes ontop to an erc191 hash.
+func scMessageHash(message string) [32]byte {
+	var messageHash [32]byte
+	copy(messageHash[:], ethCrypto.Keccak256([]byte(message)))
+	return messageHash
 }
 
 func mergeErrors(errEOA error, errCA error) error {
