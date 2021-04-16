@@ -52,7 +52,7 @@ func (m *mockContract) _1626ba7e(methodParams []byte) ([]byte, error) {
 	sig := []byte{}
 
 	mixedBytes := []interface{}{&data, &sig}
-	err = abi.Unpack(&mixedBytes, "mixedBytes", methodParams)
+	err = abi.UnpackIntoInterface(&mixedBytes, "mixedBytes", methodParams)
 	if err != nil {
 		return nil, err
 	}
