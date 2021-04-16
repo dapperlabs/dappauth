@@ -1,6 +1,6 @@
 module github.com/dapperlabs/dappauth
 
-go 1.12
+go 1.16
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20190325233358-a123909ec740 // indirect
