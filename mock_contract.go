@@ -41,7 +41,7 @@ func (m *mockContract) CallContract(ctx context.Context, call ethereum.CallMsg, 
 func (m *mockContract) _1626ba7e(methodParams []byte) ([]byte, error) {
 	// TODO: refactor out of method
 	const definition = `[
-	{ "name" : "mixedBytes", "constant" : true, "outputs": [{ "name": "a", "type": "bytes32" }, { "name": "b", "type": "bytes" } ] }]`
+	{ "name" : "mixedBytes", "constant" : true, "type": "function", "outputs": [{ "name": "a", "type": "bytes32" }, { "name": "b", "type": "bytes" } ] }]`
 
 	abi, err := ethAbi.JSON(strings.NewReader(definition))
 	if err != nil {
