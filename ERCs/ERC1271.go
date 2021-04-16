@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindERC1271(address common.Address, caller bind.ContractCaller, transactor 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ERC1271 *ERC1271Raw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ERC1271 *ERC1271Raw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ERC1271.Contract.ERC1271Caller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_ERC1271 *ERC1271Raw) Transact(opts *bind.TransactOpts, method string, par
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ERC1271 *ERC1271CallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ERC1271 *ERC1271CallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ERC1271.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,26 +173,31 @@ func (_ERC1271 *ERC1271TransactorRaw) Transact(opts *bind.TransactOpts, method s
 
 // IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+// Solidity: function isValidSignature(bytes32 hash, bytes _signature) view returns(bytes4 magicValue)
 func (_ERC1271 *ERC1271Caller) IsValidSignature(opts *bind.CallOpts, hash [32]byte, _signature []byte) ([4]byte, error) {
-	var (
-		ret0 = new([4]byte)
-	)
-	out := ret0
-	err := _ERC1271.contract.Call(opts, out, "isValidSignature", hash, _signature)
-	return *ret0, err
+	var out []interface{}
+	err := _ERC1271.contract.Call(opts, &out, "isValidSignature", hash, _signature)
+
+	if err != nil {
+		return *new([4]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([4]byte)).(*[4]byte)
+
+	return out0, err
+
 }
 
 // IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+// Solidity: function isValidSignature(bytes32 hash, bytes _signature) view returns(bytes4 magicValue)
 func (_ERC1271 *ERC1271Session) IsValidSignature(hash [32]byte, _signature []byte) ([4]byte, error) {
 	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, hash, _signature)
 }
 
 // IsValidSignature is a free data retrieval call binding the contract method 0x1626ba7e.
 //
-// Solidity: function isValidSignature(hash bytes32, _signature bytes) constant returns(magicValue bytes4)
+// Solidity: function isValidSignature(bytes32 hash, bytes _signature) view returns(bytes4 magicValue)
 func (_ERC1271 *ERC1271CallerSession) IsValidSignature(hash [32]byte, _signature []byte) ([4]byte, error) {
 	return _ERC1271.Contract.IsValidSignature(&_ERC1271.CallOpts, hash, _signature)
 }

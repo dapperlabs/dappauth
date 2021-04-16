@@ -149,7 +149,6 @@ func TestDappAuth(t *testing.T) {
 				sig += generateSignature(test.isEOA, test.challengeSign, signingKey, test.authAddr, t)
 			}
 			isAuthorizedSigner, err := authenticator.IsAuthorizedSigner(test.challenge, sig, test.authAddr.Hex())
-
 			expectBool(err != nil, test.expectedAuthorizedSignerError, t)
 			expectBool(isAuthorizedSigner, test.expectedAuthorizedSigner, t)
 		})
